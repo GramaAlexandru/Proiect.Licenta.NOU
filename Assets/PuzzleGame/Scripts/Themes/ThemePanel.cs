@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using PuzzleGame.Ads;
 using PuzzleGame.UI;
 using UnityEngine;
 
@@ -14,8 +13,6 @@ namespace PuzzleGame.Themes
 
         [SerializeField]
         GameObject playButton;
-        [SerializeField]
-        MonetizeButton monetizeButton;
         readonly List<ThemePreview> previews = new List<ThemePreview>();
 
         ThemePreset lastAvailableTheme;
@@ -54,32 +51,14 @@ namespace PuzzleGame.Themes
             ThemePreset theme = ThemeController.Instance.CurrentTheme;
 
             playButton.SetActive(false);
-            monetizeButton.gameObject.SetActive(false);
 
-            if (theme.price.value == 0 || UserProgress.Current.IsItemPurchased(theme.name))
-            {
-                lastAvailableTheme = theme;
-                playButton.SetActive(true);
-            }
-            else
-            {
-                monetizeButton.SetPrice(theme.name, theme.price);
-                monetizeButton.gameObject.SetActive(true);
-            }
+            lastAvailableTheme = theme;
+            playButton.SetActive(true);
         }
 
         void OnThemeClick(ThemePreview themePreview)
         {
             ThemeController.Instance.CurrentTheme = themePreview.Theme;
-            UpdateButtons();
-        }
-
-        void OnPurchaseComplete()
-        {
-            ThemeController.Instance.OnThemePurchased(ThemeController.Instance.CurrentTheme);
-            lastAvailableTheme = ThemeController.Instance.CurrentTheme;
-            ThemeController.Instance.SaveCurrentTheme();
-
             UpdateButtons();
         }
 
@@ -91,8 +70,6 @@ namespace PuzzleGame.Themes
                 previews[i].Theme = themePresets[i];
                 previews[i].gameObject.SetActive(true);
             }
-
-            monetizeButton.PurchaseComplete += OnPurchaseComplete;
 
             UpdateButtons();
         }

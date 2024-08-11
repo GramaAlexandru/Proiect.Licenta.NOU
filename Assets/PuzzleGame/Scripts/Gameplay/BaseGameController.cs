@@ -14,46 +14,6 @@ namespace PuzzleGame.Gameplay
         {
             gameState.SaveGameState();
         }
-
-        protected override void BoosterExecute<T>(T target)
-        {
-            if (boosterType != BoosterType.Undo)
-                SaveGameState();
-
-            bool boosterProceeded = true;
-
-            switch (boosterType)
-            {
-                case BoosterType.Undo:
-                    Undo.ClearGame(field);
-                    OnClearGame();
-                    boosterProceeded = Undo.Execute(gameState, StartGame);
-                    break;
-                case BoosterType.ClearNumber when target is NumberedBrick brick:
-                    Vector2Int coords = GetCoords(brick);
-                    ClearNumber.Execute(field, field[coords.x, coords.y].Number, OnBoostersComplete);
-                    break;
-                case BoosterType.ClearBrick when target is NumberedBrick brick:
-                    ClearBrick.Execute(field, GetCoords(brick), OnBoostersComplete);
-                    break;
-                case BoosterType.Explosion when target is Brick brick:
-                    AnimateDestroy(GetCoords(brick), OnBoostersComplete);
-                    break;
-                case BoosterType.RemoveFigure when target is FigureController figure:
-                    RemoveFigure.Execute(figure);
-                    OnFigureRemoved(figure);
-                    OnBoostersComplete();
-                    break;
-                case BoosterType.ClearHorizontalLine when target is Brick brick:
-                    ClearHorizontalLines.Execute(field, GetCoords(brick).y, 1, OnBoostersComplete);
-                    break;
-                case BoosterType.ClearVerticalLine when target is Brick brick:
-                    ClearVerticalLines.Execute(field, GetCoords(brick).x, 1, OnBoostersComplete);
-                    break;
-            }
-
-            BoostersController.Instance.OnBoosterProceeded(boosterProceeded);
-        }
     }
 
     public abstract class BaseGameController : MonoBehaviour
@@ -73,8 +33,6 @@ namespace PuzzleGame.Gameplay
 
         protected NumberedBrick[,] field;
     
-        protected bool isBoosterSelected;
-        protected BoosterType boosterType;
         protected string destroyVfx = "DestroyVFX";
 
         public int HighlightSortingOrder { get; set; }
@@ -86,11 +44,6 @@ namespace PuzzleGame.Gameplay
         protected void OnGameOver()
         {
             GameOver.Invoke();
-        }
-
-        protected void SetStartBoosters()
-        {
-            BoostersController.Instance.SetBoosters();
         }
 
         /// <summary>
@@ -221,42 +174,6 @@ namespace PuzzleGame.Gameplay
             return true;
         }
 
-        /// <summary>
-        /// Last chance implementation
-        /// </summary>
-
-        public virtual void LastChance(LastChance lastChance)
-        {
-            switch (lastChance.LastChanceType)
-            {
-                case LastChanceType.Numbers:
-                    ClearNumbers.Execute(field, lastChance.MaxNumber, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.CrossLines:
-                    /*int coordY = (bricksCount.y - lastChance.LinesCount) / 2;
-                    ClearHorizontalLines.Execute(field, coordY, lastChance.LinesCount, OnLastChanceCompleted);
-                    
-                    int coordX = (bricksCount.x - lastChance.LinesCount) / 2;
-                    ClearVerticalLines.Execute(field, coordX, lastChance.LinesCount, OnLastChanceCompleted);
-                    ClearCrossLines.Execute(field, OnLastChanceCompleted);*/
-                    break;
-                case LastChanceType.LinesHorizontal:
-                    int coordY = (bricksCount.y - lastChance.LinesCount) / 2;
-                    ClearHorizontalLines.Execute(field, coordY, lastChance.LinesCount, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.LinesVertical:
-                    int coordX = (bricksCount.x - lastChance.LinesCount) / 2;
-                    ClearVerticalLines.Execute(field, coordX, lastChance.LinesCount, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.Explosion:
-                    var coords = new Vector2Int(bricksCount.x / 2, bricksCount.y / 2);
-                    AnimateDestroy(coords, OnLastChanceCompleted);
-                    return;
-            }
-        }
-
-        protected abstract void OnLastChanceCompleted();
-
         protected void AnimateDestroy(Vector2Int coords, Action onComplete)
         {
             field.DestroyBrick(coords, null);
@@ -265,33 +182,6 @@ namespace PuzzleGame.Gameplay
             this.DelayedCall(0.25f, () => Explosion.Execute(field, adjacentCoords, null));
         
             SpawnDestroyAnimation(coords, onComplete);
-        }
-
-        /// <summary>
-        /// Boosters basic implementation
-        /// </summary>
-    
-        public virtual void HighlightBoosterTarget(BoosterType type, bool active)
-        {
-            isBoosterSelected = active;
-            boosterType = type;
-
-            switch (type)
-            {
-                case BoosterType.ClearBrick:
-                case BoosterType.ClearNumber:
-                    HighlightBricks(active);
-                    break;
-                case BoosterType.RemoveFigure:
-                    HighlightFigures(active);
-                    break;
-                case BoosterType.Explosion:
-                case BoosterType.Undo:
-                case BoosterType.ClearHorizontalLine:
-                case BoosterType.ClearVerticalLine:
-                    HighlightField(active);
-                    break;
-            }
         }
 
         protected virtual void HighlightField(bool active)
@@ -327,21 +217,10 @@ namespace PuzzleGame.Gameplay
 
         protected void OnHighlightedTargetClick<T>(T target)
         {
-            if (!isBoosterSelected) return;
-
             soundCollection.GetSfx(SoundId.Destroying).Play();
-
-            BoosterExecute(target);
         }
-
-        protected abstract void BoosterExecute<T>(T target);
 
         protected abstract void SaveGameState();
-    
-        protected virtual void OnBoostersComplete()
-        {
-            SaveGame();
-        }
     
         protected virtual void OnFigureRemoved(FigureController figure){}
     

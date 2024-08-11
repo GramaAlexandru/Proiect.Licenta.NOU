@@ -8,19 +8,6 @@ namespace PuzzleGame
     [Serializable]
     public class UserProgress
     {
-        [Serializable]
-        struct PurchaseProgress
-        {
-            public string item;
-            public int value;
-
-            public PurchaseProgress(string item, int value)
-            {
-                this.item = item;
-                this.value = value;
-            }
-        }
-
         static UserProgress current;
 
         public event Action ProgressUpdate = delegate { };
@@ -29,12 +16,6 @@ namespace PuzzleGame
 
         [SerializeField]
         int coins;
-
-        [SerializeField]
-        List<string> purchasedItems = new();
-
-        [SerializeField]
-        List<PurchaseProgress> purchaseInProgress = new();
 
         [SerializeField]
         string currentGameId;
@@ -93,53 +74,6 @@ namespace PuzzleGame
 
                 ProgressUpdate.Invoke();
             }
-        }
-
-        public bool IsItemPurchased(string item)
-        {
-            return purchasedItems.Contains(item);
-        }
-
-        public int GetItemsPurchasedCount(string item)
-        {
-            return purchasedItems.FindAll((i) => i.Equals(item)).Count;
-        }
-
-        public void RemoveItemPurchase(string item)
-        {
-            if (purchasedItems.Contains(item))
-                purchasedItems.Remove(item);
-        }
-    
-        public void RemoveAllItemPurchase(string item)
-        {
-            if (purchasedItems.Contains(item))
-                purchasedItems.RemoveAll(i => i.Equals(item));
-        }
-
-        public void OnItemPurchased(string item)
-        {
-            purchasedItems.Add(item);
-
-            Save();
-
-            ProgressUpdate.Invoke();
-        }
-
-        public int GetItemPurchaseProgress(string item)
-        {
-            PurchaseProgress purchaseProgress = purchaseInProgress.Find(p => p.item == item);
-            return purchaseProgress.value;
-        }
-
-        public void SetItemPurchaseProgress(string item, int value)
-        {
-            purchaseInProgress.RemoveAll(p => p.item == item);
-            purchaseInProgress.Add(new PurchaseProgress(item, value));
-
-            Save();
-
-            ProgressUpdate.Invoke();
         }
 
         public T GetGameState<T>(string id) where T : GameState

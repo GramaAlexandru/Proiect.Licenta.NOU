@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using PuzzleGame.Gameplay.Boosters;
-using PuzzleGame.Gameplay.Boosters.Merged;
 using PuzzleGame.Sounds;
 using UnityEngine;
 using UnityEngine.UI;
@@ -74,7 +72,6 @@ namespace PuzzleGame.Gameplay.Merged
             gameState.Score = 0;
             gameState.IsGameOver = false;
             SpawnNextBricks();
-            SetStartBoosters();
 
             SaveGame();
         }
@@ -203,11 +200,6 @@ namespace PuzzleGame.Gameplay.Merged
 
         void OnNextBrickClick(FigureController controller)
         {
-            if (isBoosterSelected)
-            {
-                OnHighlightedTargetClick(nextBrickController);
-                return;
-            }
             if (isAnimating) return;
         
             soundCollection.GetSfx(SoundId.Click).Play();
@@ -506,13 +498,6 @@ namespace PuzzleGame.Gameplay.Merged
             return field[x, y] == null && coords.Any(c => field[c.x, c.y] == null);
         }
 
-        protected override void OnLastChanceCompleted()
-        {
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-            SaveGame();
-        }
-    
         protected override void HighlightFigures(bool active)
         {
             nextBrickController.Interactable = !active;
@@ -521,22 +506,6 @@ namespace PuzzleGame.Gameplay.Merged
                 brick.GetComponentInChildren<Image>().raycastTarget = !active;
 
             SetSortingOrder(nextBrickController.gameObject, active);
-        }
-
-        protected override void BoosterExecute<T>(T target)
-        {
-            if (boosterType != BoosterType.RemoveFigure)
-            {
-                base.BoosterExecute(target);
-                return;
-            }
-
-            SaveGameState();
-
-            RemoveFigureMerged.Execute(nextBrickController);
-            OnFigureRemoved(null);
-            OnBoostersComplete();
-            BoostersController.Instance.OnBoosterProceeded(true);
         }
 
         protected override void OnClearGame()

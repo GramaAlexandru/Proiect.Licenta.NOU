@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using PuzzleGame.Gameplay.Boosters;
 using PuzzleGame.Input;
 using PuzzleGame.Sounds;
 using UnityEngine;
@@ -104,7 +103,6 @@ namespace PuzzleGame.Gameplay.Bricks2048
             SpawnStartingBricks();
             nextBrick.Number = GetRandomNumber();
             nextBrick.ColorIndex = GetColorIndex(nextBrick.Number);
-            SetStartBoosters();
 
             SaveGame();
         }
@@ -169,13 +167,6 @@ namespace PuzzleGame.Gameplay.Bricks2048
 
         void OnDown()
         {
-            if (isBoosterSelected)
-            {
-                isAnimating = true;
-                OnHighlightedTargetClick(this);
-                return;
-            }
-        
             if (IsAnimating || isFalling)
                 return;
 
@@ -186,9 +177,6 @@ namespace PuzzleGame.Gameplay.Bricks2048
 
         void OnTapMove(int value)
         {
-            if (isBoosterSelected)
-                return;
-        
             if (IsAnimating || isFalling) return;
 
             int path = 0;
@@ -222,7 +210,7 @@ namespace PuzzleGame.Gameplay.Bricks2048
 
         void Update()
         {
-            if (IsAnimating || isBoosterSelected)
+            if (IsAnimating)
                 return;
 
             timeSinceMoveDown += Time.deltaTime;
@@ -566,78 +554,6 @@ namespace PuzzleGame.Gameplay.Bricks2048
                 onComplete.Invoke(normalized);
         }
 
-        public override void LastChance(LastChance lastChance)
-        {
-            field[currentBrickCoords.x, currentBrickCoords.y] = CurrentBrick;
-
-            switch (lastChance.LastChanceType)
-            {
-                case LastChanceType.Numbers:
-                    ClearNumbers.Execute(field, lastChance.MaxNumber, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.CrossLines:
-                    ClearCrossLines.Execute(field, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.LinesHorizontal:
-                    var coordY = bricksCount.y - lastChance.LinesCount;
-                    ClearHorizontalLines.Execute(field, coordY, lastChance.LinesCount, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.LinesVertical:
-                    int coordX = (bricksCount.x - lastChance.LinesCount) / 2;
-                    ClearVerticalLines.Execute(field, coordX, lastChance.LinesCount, OnLastChanceCompleted);
-                    break;
-                case LastChanceType.Explosion:
-                    var coords = new Vector2Int(bricksCount.x / 2, bricksCount.y / 2);
-                    AnimateDestroy(coords, OnLastChanceCompleted);
-                    return;
-            }
-        }
-
-        protected override void OnLastChanceCompleted()
-        {
-            Normalize(
-                normalized =>
-                {
-                    Merge(normalized, () =>
-                    {
-                        currentBrickCoords = new Vector2Int(bricksCount.x / 2, bricksCount.y - 1);
-                        gameState.CurrentBrickCoords = currentBrickCoords;
-
-                        currentBrick = SpawnBrick(currentBrickCoords, nextBrick.Number);
-                        nextBrick.Number = GetRandomNumber();
-                        nextBrick.ColorIndex = GetColorIndex(nextBrick.Number);
-        
-                        gameState.IsGameOver = false;
-                        gameState.ClearSave();
-        
-                        SaveGame();
-                    }); 
-                }
-            );
-        }
-    
-        public override void HighlightBoosterTarget(BoosterType type, bool active)
-        {
-            isBoosterSelected = active;
-            boosterType = type;
-
-            switch (type)
-            {
-                case BoosterType.ClearBrick:
-                case BoosterType.ClearNumber:
-                case BoosterType.Explosion:
-                case BoosterType.ClearHorizontalLine:
-                case BoosterType.ClearVerticalLine:
-                    HighlightBricks(active);
-                    break;
-                case BoosterType.RemoveFigure:
-                    break;
-                case BoosterType.Undo:
-                    HighlightField(active);
-                    break;
-            }
-        }
-
         protected override void HighlightField(bool active)
         {
             isAnimating = active;
@@ -664,20 +580,6 @@ namespace PuzzleGame.Gameplay.Bricks2048
         {
             if(currentBrick != null)
                 Destroy(currentBrick.gameObject);
-        }
-
-        protected override void OnBoostersComplete()
-        {
-
-            Normalize(
-                normalized =>
-                {
-                    Merge(normalized, () =>
-                    {
-                        base.OnBoostersComplete(); 
-                    });
-                }
-            );
         }
     }
 }
