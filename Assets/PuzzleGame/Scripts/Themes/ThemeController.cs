@@ -15,7 +15,6 @@ namespace PuzzleGame.Themes
         string currentGameId = "";
 
         public event Action<ThemePreset> ThemeChanged = delegate { };
-        public event Action<ThemePreset> ThemePurchased = delegate { };
 
         public static ThemeController Instance => instance ?? (instance = new ThemeController());
 
@@ -61,17 +60,6 @@ namespace PuzzleGame.Themes
         public ThemePreset[] GetThemes()
         {
             return (ThemePreset[]) themes.Clone();
-        }
-
-        public bool IsThemePurchased(ThemePreset theme)
-        {
-            return UserProgress.Current.IsItemPurchased(theme.name);
-        }
-
-        public void OnThemePurchased(ThemePreset theme)
-        {
-            UserProgress.Current.OnItemPurchased(theme.name);
-            ThemePurchased.Invoke(theme);
         }
     }
 }

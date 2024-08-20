@@ -74,7 +74,6 @@ namespace PuzzleGame.Gameplay.PowerPuzzle
             gameState.IsGameOver = false;
             SpawnStartingBricks();
             SpawnNextBricks();
-            SetStartBoosters();
         
             SaveGame();
         }
@@ -190,12 +189,6 @@ namespace PuzzleGame.Gameplay.PowerPuzzle
 
         void OnNumberedBrickClick(Brick brick)
         {
-            if (isBoosterSelected)
-            {
-                OnHighlightedTargetClick(brick);
-                return;
-            }
-
             if (isAnimating || brick == currentBrick)
                 return;
 
@@ -222,12 +215,6 @@ namespace PuzzleGame.Gameplay.PowerPuzzle
 
         void OnEmptyBrickClick(Brick brick, Vector2Int coords)
         {
-            if (isBoosterSelected)
-            {
-                OnHighlightedTargetClick(brick);
-                return;
-            }
-        
             if (isAnimating || currentBrick == null || field[coords.x, coords.y] != null)
                 return;
 
@@ -534,26 +521,6 @@ namespace PuzzleGame.Gameplay.PowerPuzzle
             }
 
             return fieldIsEmpty;
-        }
-
-        protected override void OnLastChanceCompleted()
-        {
-            isAnimating = false;
-        
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-            SaveGame();
-        }
-
-        protected override void OnBoostersComplete()
-        {
-            if (IsFieldEmpty())
-            {
-                SaveGameState();
-                SpawnNewBricks(SaveGame);
-            }
-
-            base.OnBoostersComplete();
         }
 
         protected override void OnClearGame()

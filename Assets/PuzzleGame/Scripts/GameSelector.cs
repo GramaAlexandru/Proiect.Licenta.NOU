@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using PuzzleGame.Ads;
 using PuzzleGame.Gameplay;
-using PuzzleGame.Gameplay.Boosters;
-using PuzzleGame.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,10 +8,6 @@ namespace PuzzleGame
     public class GameSelector : MonoBehaviour
     {
         [SerializeField] GamePresetsList gamePresetsList;
-        [SerializeField] BoostersPanel boostersPanel;
-        [SerializeField] BoosterButton boosterPrefab;
-        [SerializeField] RectTransform boostersParent;
-        [SerializeField] Button boostersBlocker;
 
         [SerializeField] GameObject navigation;
         [SerializeField] GameObject fieldBlocker;
@@ -24,11 +16,6 @@ namespace PuzzleGame
         [SerializeField] Button previous;
         [SerializeField] Toggle togglePrefab;
         [SerializeField] Transform togglesParent;
-        [SerializeField] PriceLabel priceLabel;
-
-        [SerializeField] MonetizeButton monetizeButton;
-
-        [SerializeField] GameOverAds gameOver;
 
         [SerializeField] int highlightSortingOrder;
 
@@ -36,7 +23,6 @@ namespace PuzzleGame
         BaseGameController currentGame;
     
         Toggle[] toggles;
-        readonly List<BoosterButton> boosters = new();
 
         static readonly int BigField = Animator.StringToHash("Big");
         static readonly int MiddleField = Animator.StringToHash("Middle");
@@ -58,23 +44,10 @@ namespace PuzzleGame
 
         void MaximizeCurrentGame()
         {
-            bool isGameAvailable = gamePresetsList.presets[currentGameIndex].price.value <= 0 ||
-                                   UserProgress.Current.IsItemPurchased(currentGame.name);
-
-            if (isGameAvailable && !gameOver.gameObject.activeSelf)
-            {
-                Time.timeScale = 1;
-                ResetTriggers();
-                currentGame.fieldAnimator.SetTrigger(BigField);
-                navigation.SetActive(true);
-            }
-            else
-            {
-                ResetTriggers();
-                currentGame.fieldAnimator.SetTrigger(MiddleField);
-                navigation.SetActive(true);
-                fieldBlocker.SetActive(true);
-            }
+            ResetTriggers();
+            currentGame.fieldAnimator.SetTrigger(MiddleField);
+            navigation.SetActive(true);
+            fieldBlocker.SetActive(true);
         }
 
         void ResetTriggers()
@@ -101,12 +74,6 @@ namespace PuzzleGame
             UpdateCurrentGame();
         }
 
-        void OnGamePurchased()
-        {
-            UserProgress.Current.OnItemPurchased(gamePresetsList.presets[currentGameIndex].name);
-            UpdateCurrentGame();
-        }
-
         void UpdateCurrentGame()
         {
             if (currentGame)
@@ -125,79 +92,11 @@ namespace PuzzleGame
                     toggles[i].isOn = i == currentGameIndex;
             }
         
-            UpdateBoosters();
-            gameOver.gameObject.SetActive(false);
-
-            Price price = gamePresetsList.presets[currentGameIndex].price;
-
-            bool isGameAvailable = price.value <= 0 ||
-                                   UserProgress.Current.IsItemPurchased(currentGame.name);
-
-            Time.timeScale = isGameAvailable ? 1 : 0;
-
-            priceLabel.gameObject.SetActive(!isGameAvailable);
-            monetizeButton.gameObject.SetActive(!isGameAvailable);
-
-            fieldBlocker.SetActive(!isGameAvailable);
-
-            if (isGameAvailable)
-            {
-                currentGame.GameOver += OnGameOver;
-                return;
-            }
-
-            priceLabel.SetPrice(currentGame.name, price);
-
-            ResetTriggers();
-            currentGame.fieldAnimator.SetTrigger(MiddleField);
-
-            monetizeButton.SetPrice(currentGame.name, price);
-        }
-
-        void UpdateBoosters()
-        {
-            foreach (var booster in boosters)
-                DestroyImmediate(booster.gameObject);
-            boosters.Clear();
-        
-            for (int i = 0; i < gamePresetsList.presets[currentGameIndex].BoosterConfigs.Count; i++)
-            {
-                BoosterButton booster = Instantiate(boosterPrefab, boostersParent);
-                booster.Init(
-                    gamePresetsList.presets[currentGameIndex].BoosterConfigs[i].booster,
-                    highlightSortingOrder,
-                    gamePresetsList.presets[currentGameIndex].canBuyBoosters);
-            
-                booster.Select += OnBoosterSelected;
-                boosters.Add(booster);
-
-                BoostersController.Instance.SetBoostersConfig(gamePresetsList.presets[currentGameIndex].BoosterConfigs);
-            }
-        }
-
-        void OnBoosterSelected(BoosterPreset preset, bool isPurchased)
-        {
-            BoostersController.Instance.CurrentBooster = preset;
-            Time.timeScale = 0;
-
-            if (isPurchased)
-            {
-                boostersBlocker.gameObject.SetActive(true);
-                currentGame.HighlightBoosterTarget(preset.Type, true);
-            }
-            else
-            {
-                boostersPanel.Init(preset);
-                MinimizeCurrentGame(true);
-            }
-        }
-    
-        void OnBoosterDeselected(BoosterPreset preset)
-        {
-            boostersBlocker.gameObject.SetActive(false);
-            boosters.Find(b => b.Preset == preset).Deselect();
-            currentGame.HighlightBoosterTarget(preset.Type, false);
             Time.timeScale = 1;
+
+            fieldBlocker.SetActive(false);
+
+            currentGame.GameOver += OnGameOver;
         }
 
         void OnGameOver()
@@ -205,24 +104,6 @@ namespace PuzzleGame
             ResetTriggers();
             currentGame.fieldAnimator.SetTrigger(MiddleField);
             fieldBlocker.SetActive(true);
-
-            foreach(BoosterButton button in boosters)
-                button.SetRaycast(false);
-        
-            gameOver.gameObject.SetActive(true);
-            gameOver.LastChance();
-        }
-    
-        void OnLastChance()
-        {
-            gameOver.gameObject.SetActive(false);
-            fieldBlocker.SetActive(false);
-        
-            foreach(BoosterButton button in boosters)
-                button.SetRaycast(true);
-
-            currentGame.LastChance(gamePresetsList.presets[currentGameIndex].lastChance);
-            MinimizeCurrentGame(false);
         }
     
         void Awake()
@@ -249,31 +130,6 @@ namespace PuzzleGame
 
             previous.gameObject.SetActive(multipleModesAvailable);
             previous.onClick.AddListener(OnPreviousClick);
-
-            boostersBlocker.onClick.AddListener(() => OnBoosterDeselected(BoostersController.Instance.CurrentBooster));
-
-            monetizeButton.PurchaseComplete += OnGamePurchased;
-            gameOver.LastChanceComplete += OnLastChance;
-
-            BoostersController.Instance.BoosterProceeded += OnBoosterProceeded;
-            BoostersController.Instance.BoosterPurchased += OnBoosterPurchased;
-        }
-
-        private void OnDestroy()
-        {
-            BoostersController.Instance.BoosterProceeded -= OnBoosterProceeded;
-            BoostersController.Instance.BoosterPurchased -= OnBoosterPurchased;
-        }
-
-        void OnBoosterProceeded(BoosterPreset preset, bool succeed)
-        {
-            OnBoosterDeselected(preset);
-        }
-
-        void OnBoosterPurchased(BoosterPreset preset)
-        {
-            MinimizeCurrentGame(false);
-            OnBoosterSelected(preset, true);
         }
     }
 }

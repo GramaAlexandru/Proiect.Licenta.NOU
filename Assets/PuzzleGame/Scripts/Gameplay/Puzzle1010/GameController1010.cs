@@ -67,7 +67,6 @@ namespace PuzzleGame.Gameplay.Puzzle1010
             gameState.IsGameOver = false;
             SpawnNewFigures();
             SpawnStartingBricks();
-            SetStartBoosters();
 
             SaveGame();
         }
@@ -468,17 +467,6 @@ namespace PuzzleGame.Gameplay.Puzzle1010
             }
 
             return true;
-        }
-
-        protected override void OnLastChanceCompleted()
-        {
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-            
-            CheckFigures();
-
-            SaveGame();
-            CheckGameOver();
         }
 
         protected override void OnClearGame()

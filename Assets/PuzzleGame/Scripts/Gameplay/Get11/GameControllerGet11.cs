@@ -60,7 +60,6 @@ namespace PuzzleGame.Gameplay.Get11
             gameState.Score = 0;
             gameState.IsGameOver = false;
             SpawnStartingBricks();
-            SetStartBoosters();
 
             SaveGame();
         }
@@ -136,12 +135,6 @@ namespace PuzzleGame.Gameplay.Get11
 
         void OnClick(Brick brick)
         {
-            if (isBoosterSelected)
-            {
-                OnHighlightedTargetClick(brick);
-                return;
-            }
-        
             if (isAnimating)
                 return;
 
@@ -447,14 +440,6 @@ namespace PuzzleGame.Gameplay.Get11
                 onComplete.Invoke(normalized);
         }
 
-        protected override void OnLastChanceCompleted()
-        {
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-
-            OnBoostersComplete();
-        }
-
         protected override void HighlightField(bool active)
         {
             SetSortingOrder(fieldTransform.transform.parent.gameObject, active);
@@ -463,20 +448,6 @@ namespace PuzzleGame.Gameplay.Get11
         protected override void HighlightBricks(bool active)
         {
             HighlightField(active);
-        }
-
-        protected override void OnBoostersComplete()
-        {
-            Normalize(
-                normalized =>
-                {
-                    SpawnNewBricks(() =>
-                    {
-                        base.OnBoostersComplete();
-                        CheckGameOver();
-                    });
-                }
-            );
         }
     }
 }

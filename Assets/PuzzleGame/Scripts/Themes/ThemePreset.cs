@@ -7,8 +7,6 @@ namespace PuzzleGame.Themes
     [CreateAssetMenu(fileName = "ThemePreset", menuName = "Theme Preset")]
     public class ThemePreset : ScriptableObject
     {
-        public Price price;
-
         [Space] [SerializeField] Label brickLabel;
         [SerializeField] Color[] brickLabelColors;
         [SerializeField] Color[] brickSpriteColors;

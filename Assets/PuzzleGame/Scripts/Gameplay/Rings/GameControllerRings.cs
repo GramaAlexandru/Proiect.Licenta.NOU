@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using PuzzleGame.Gameplay.Boosters;
-using PuzzleGame.Gameplay.Boosters.Rings;
 using PuzzleGame.Sounds;
 using PuzzleGame.Themes;
 using UnityEngine;
@@ -87,7 +85,6 @@ namespace PuzzleGame.Gameplay.Rings
             gameState.IsGameOver = false;
             OnScoreUpdate();
             SpawnNextRing();
-            SetStartBoosters();
 
             SaveGame();
         }
@@ -172,11 +169,6 @@ namespace PuzzleGame.Gameplay.Rings
         
             ring.PointerDown += controller =>
             {
-                if (isBoosterSelected)
-                {
-                    OnHighlightedTargetClick(nextRing);
-                    return;
-                }
                 HighlightField(controller, true);
             };
             ring.PointerUp += RingOnPointerUp;
@@ -466,79 +458,6 @@ namespace PuzzleGame.Gameplay.Rings
                 applier.SetSortingOrder(HighlightSortingOrder);
             else
                 applier.Hide();
-        }
-
-        public override void LastChance(LastChance lastChance)
-        {
-            switch (lastChance.LastChanceType)
-            {
-                case LastChanceType.Numbers:
-                    Debug.LogError("Not implemented!");
-                    return;
-                case LastChanceType.CrossLines:
-                    ClearCrossLinesRings.Execute(rings);
-                    break;
-                case LastChanceType.LinesHorizontal:
-                    ClearHorizontalLinesRings.Execute(rings, 1);
-                    break;
-                case LastChanceType.LinesVertical:
-                    ClearVerticalLinesRings.Execute(rings, 1);
-                    break;
-                case LastChanceType.Explosion:
-                    ExplosionRings.Execute(rings);
-                    break;
-            }
-
-            OnLastChanceCompleted();
-        }
-
-        protected override void OnLastChanceCompleted()
-        {
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-            SaveGame();
-        }
-
-        protected override void BoosterExecute<T>(T target)
-        {
-            if (boosterType != BoosterType.Undo) 
-                SaveGameState();
-            
-            bool boosterProceeded = true;
-
-            switch (boosterType)
-            {
-                case BoosterType.Undo:
-                    Undo.ClearGame(rings);
-                    OnClearGame();
-                    boosterProceeded = Undo.Execute(gameState, StartGame);
-                    break;
-                case BoosterType.ClearBrick when target is NumberedBrick brick:
-                    ClearRing.Execute(rings, GetCoords(brick));
-                    break;
-                case BoosterType.ClearNumber:
-                    Debug.LogError("Not implemented!");
-                    boosterProceeded = false;
-                    break;
-                case BoosterType.Explosion:
-                    ExplosionRings.Execute(rings);
-                    break;
-                case BoosterType.RemoveFigure when target is NextRingController:
-                    RemoveFigureRings.Execute(nextRing);
-                    OnFigureRemoved(null);
-                    break;
-                case BoosterType.ClearHorizontalLine when target is NumberedBrick brick:
-                    ClearHorizontalLinesRings.Execute(rings, GetCoords(brick).y);
-                    break;
-                case BoosterType.ClearVerticalLine when target is NumberedBrick brick:
-                    ClearVerticalLinesRings.Execute(rings, GetCoords(brick).x);
-                    break;
-            }
-
-            if(boosterType != BoosterType.Undo)
-                OnBoostersComplete();
-        
-            BoostersController.Instance.OnBoosterProceeded(boosterProceeded);
         }
 
         protected override void OnFigureRemoved(FigureController figure)

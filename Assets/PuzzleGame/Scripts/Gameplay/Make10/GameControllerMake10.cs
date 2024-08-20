@@ -78,8 +78,6 @@ namespace PuzzleGame.Gameplay.Make10
             gameState.IsGameOver = false;
             SpawnNewFigures();
             UpdateCounters();
-            SetStartBoosters();
-
             SaveGame();
         }
 
@@ -711,30 +709,6 @@ namespace PuzzleGame.Gameplay.Make10
             }
         }
 
-        protected override void OnLastChanceCompleted()
-        {
-            gameState.IsGameOver = false;
-            gameState.ClearSave();
-
-            UpdateCounters();
-
-            CheckLines(() =>
-            {
-                UpdateCounters();
-                SaveGame();
-                CheckGameOver();
-            });
-        }
-    
-        protected override void OnBoostersComplete()
-        {
-            CheckLines(() =>
-            {
-                UpdateCounters();
-                base.OnBoostersComplete();
-            });
-        }
-    
         protected override void OnClearGame()
         {
             foreach (FigureController figureController in figureControllers)
